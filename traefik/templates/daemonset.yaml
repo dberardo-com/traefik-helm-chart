@@ -1,5 +1,5 @@
 {{- if and .Values.deployment.enabled (eq .Values.deployment.kind "DaemonSet") -}}
-  {{ # 
+  {{/*
   {{- with .Values.additionalArguments -}}
     {{- range . -}}
       {{- if contains ".acme." . -}}
@@ -10,7 +10,7 @@
   {{- if eq (default .Chart.AppVersion .Values.image.tag) "latest" }}
     {{- fail "\n\n ERROR: latest tag should not be used" }}
   {{- end }}
-  # }}
+  */}}
   {{- if eq (.Values.updateStrategy.type) "RollingUpdate" }}
     {{- if and (lt .Values.updateStrategy.rollingUpdate.maxUnavailable 1.0) (.Values.hostNetwork)  }}
       {{- fail "maxUnavailable should be greater than 1 when using hostNetwork." }}
