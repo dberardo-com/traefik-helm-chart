@@ -1,6 +1,9 @@
 suite: Pod configuration
 templates:
   - deployment.yaml
+capabilities:
+  majorVersion: 1
+  minorVersion: 16
 tests:
   - it: should have envFrom with specified values
     set:
@@ -31,13 +34,10 @@ tests:
         runAsUser: 1000
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.fsGroup
-          value: 65532
-      - equal:
           path: spec.template.spec.securityContext.readOnlyRootFilesystem
           value: false
       - equal:
-          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          path: spec.template.spec.securityContext.runAsNonRoot
           value: true
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
@@ -141,7 +141,7 @@ tests:
           value: Always
   - it: should have no imagePullSecrets
     asserts:
-      - isEmpty:
+      - isNull:
           path: spec.template.spec.imagePullSecrets
   - it: should have imagePullSecrets with specified value
     set:
@@ -464,3 +464,111 @@ tests:
           of: Deployment
       - isAPIVersion:
           of: apps/v1
+  - it: should have only one http3 port when not using hostport
+    set:
+      ports:
+        websecure:
+          http3:
+            enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          any: true
+          count: 1
+          content:
+            containerPort: 8443
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: websecure-http3
+  - it: should have two separate http3 port when using hostport
+    set:
+      ports:
+        websecure:
+          hostPort: 443
+          http3:
+            enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8443
+            hostPort: 443
+            name: websecure
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8443
+            hostPort: 443
+            name: websecure-http3
+            protocol: UDP
+  - it: should honor http3 advertised port when using hostport
+    set:
+      ports:
+        websecure:
+          hostPort: 443
+          http3:
+            enabled: true
+            advertisedPort: 1234
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8443
+            hostPort: 443
+            name: websecure
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 8443
+            hostPort: 1234
+            name: websecure-http3
+            protocol: UDP
+  - it: should have a custom list of dns nameservers
+    set:
+      deployment:
+        dnsConfig:
+          nameservers:
+            - 1.1.1.1
+            - 2001:db8:30::a
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.nameservers[0]
+          value: "1.1.1.1"
+      - equal:
+          path: spec.template.spec.dnsConfig.nameservers[1]
+          value: "2001:db8:30::a"
+  - it: should have a list of dns search domain
+    set:
+      deployment:
+        dnsConfig:
+          searches:
+            - ns1.svc.cluster-domain.example
+            - my.dns.search.suffix
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.searches[0]
+          value: "ns1.svc.cluster-domain.example"
+      - equal:
+          path: spec.template.spec.dnsConfig.searches[1]
+          value: "my.dns.search.suffix"
+  - it: should have a custom dns options
+    set:
+      deployment:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: 2
+            - name: edns0
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: "ndots"
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: 2
+      - equal:
+          path: spec.template.spec.dnsConfig.options[1].name
+          value: "edns0"

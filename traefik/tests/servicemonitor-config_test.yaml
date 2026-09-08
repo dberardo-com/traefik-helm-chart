@@ -12,6 +12,16 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "You have to deploy monitoring.coreos.com/v1 first"
+  - it: should succeed to provide ServiceMonitor without the API when disabling API Check
+    values:
+      - ./values/servicemonitor.yaml
+    set:
+      metrics:
+        prometheus:
+          disableAPICheck: true
+    asserts:
+      - hasDocuments:
+          count: 1
   - it: should successfully provide ServiceMonitor with example values
     values:
       - ./values/servicemonitor.yaml
@@ -54,14 +64,14 @@ tests:
           path: spec.namespaceSelector.any
           value: true
       - equal:
-          path: spec.selector.matchLabels.[app.kubernetes.io/name]
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
           value: traefik
   - it: should provide ServiceMonitor pointing to metrics service, when hub is disabled and prometheus.service.enabled is true
-    values:
-      - ./values/servicemonitor.yaml
     capabilities:
       apiVersions:
         - monitoring.coreos.com/v1
+    values:
+      - ./values/servicemonitor.yaml
     set:
       hub:
         enabled: false
@@ -73,7 +83,7 @@ tests:
       - hasDocuments:
           count: 1
       - equal:
-          path: spec.selector.matchLabels.[app.kubernetes.io/component]
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
           value: metrics
   - it: should provide ServiceMonitor pointing to hub service, when hub is enabled
     values:

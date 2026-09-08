@@ -19,10 +19,18 @@ rbac:
 # Install with auto-scaling
 
 When enabling [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-to adjust replicas count according to CPU Usage, it's recommended to nullify replicas.
+to adjust replicas count according to CPU Usage, you'll need to set resources and nullify replicas.
+
 ```yaml
 deployment:
   replicas: null
+resources:
+  requests:
+    cpu: "100m"
+    memory: "50Mi"
+  limits:
+    cpu: "300m"
+    memory: "150Mi"
 autoscaling:
   enabled: true
   maxReplicas: 2
@@ -78,7 +86,7 @@ extraObjects:
       username: admin
       password: changeme
 
-  - apiVersion: traefik.containo.us/v1alpha1
+  - apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: traefik-dashboard-auth
@@ -130,7 +138,7 @@ extraObjects:
       username: admin
       password: changeme
 
-  - apiVersion: traefik.containo.us/v1alpha1
+  - apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: traefik-dashboard-auth
@@ -258,9 +266,34 @@ additionalArguments:
   - "--entryPoints.websecure.forwardedHeaders.trustedIPs=127.0.0.1/32,10.120.0.0/16"
 ```
 
-# Use Traefik Let's Encrypt Integration with CloudFlare
+# Enable plugin storage
 
-It needs a CloudFlare token in a Kubernetes `Secret` and a working Storage Class
+This chart follows common security practices: it runs as non root with a readonly root filesystem.
+When enabling a plugin which needs storage, you have to add it to the deployment.
+
+Here is a simple example with crowdsec. You may want to replace with your plugin or see complete exemple on crowdsec [here](https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/blob/main/exemples/kubernetes/README.md).
+
+```yaml
+deployment:
+  additionalVolumes:
+  - name: plugins
+additionalVolumeMounts:
+- name: plugins
+  mountPath: /plugins-storage
+additionalArguments:
+- "--experimental.plugins.bouncer.moduleName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+- "--experimental.plugins.bouncer.version=v1.1.9"
+```
+
+# Use Traefik native Let's Encrypt integration, without cert-manager
+
+In Traefik Proxy, ACME certificates are stored in a JSON file.
+
+This file needs to have 0600 permissions, meaning, only the owner of the file has full read and write access to it.
+By default, Kubernetes recursively changes ownership and permissions for the content of each volume.
+
+=> An initContainer can be used to avoid an issue on this sensitive file.
+See [#396](https://github.com/traefik/traefik-helm-chart/issues/396) for more details.
 
 ```yaml
 persistence:
@@ -277,7 +310,16 @@ env:
       secretKeyRef:
         name: yyy
         key: zzz
+deployment:
+  initContainers:
+    - name: volume-permissions
+      image: busybox:latest
+      command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
 ```
+
+This example needs a CloudFlare token in a Kubernetes `Secret` and a working `StorageClass`.
+
+See [the list of supported providers](https://doc.traefik.io/traefik/https/acme/#providers) for others.
 
 # Provide default certificate with cert-manager and CloudFlare DNS
 
@@ -289,6 +331,7 @@ Setup:
 **Step 1**: Create `Secret` and `Issuer` needed by `cert-manager` with your API Token. 
 See [cert-manager documentation](https://cert-manager.io/docs/configuration/acme/dns01/cloudflare/)
 for creating this token with needed rights:
+
 ```yaml
 ---
 apiVersion: v1
@@ -321,6 +364,7 @@ spec:
 ```
 
 **Step 2**: Create `Certificate` in traefik namespace
+
 ```yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -346,6 +390,7 @@ kubectl get certificate -n traefik
 If needed, logs of cert-manager pod can give you more information
 
 **Step 4**: Use it on the TLS Store in **values.yaml** file for this Helm Chart
+
 ```yaml
 tlsStore:
   default:
@@ -356,8 +401,9 @@ tlsStore:
 **Step 5**: Enjoy. All your `IngressRoute` use this certificate by default now. 
 
 They should use websecure entrypoint like this:
+
 ```yaml
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: example-com-tls
@@ -371,4 +417,3 @@ spec:
     - name: XXXX
       port: 80
 ```
-

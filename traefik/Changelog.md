@@ -1,8 +1,326 @@
 # Change Log
 
+## 23.0.1  ![AppVersion: v2.10.1](https://img.shields.io/static/v1?label=AppVersion&message=v2.10.1&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-04-27
+
+* ⬆️ Upgrade traefik Docker tag to v2.10.1
+
+
+## 23.0.0  ![AppVersion: v2.10.0](https://img.shields.io/static/v1?label=AppVersion&message=v2.10.0&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-04-26
+
+* BREAKING CHANGE: Traefik 2.10 comes with CRDs update on API Group
+
+
+## 22.3.0  ![AppVersion: v2.10.0](https://img.shields.io/static/v1?label=AppVersion&message=v2.10.0&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-04-25
+
+* ⬆️ Upgrade traefik Docker tag to v2.10.0
+* fix: 🐛 update rbac for both traefik.io and containo.us apigroups (#836)
+* breaking: 💥 update CRDs needed for Traefik v2.10
+
+
+## 22.2.0  ![AppVersion: v2.9.10](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.10&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-04-24
+
+* chore: 🔧 new release
+* added targetPort support
+* fix: 🐛 annotations leaking between aliased subcharts
+* fix: indentation on `TLSOption`
+* test: 👷 Update unit tests tooling
+* feat: override container port
+* feat: allow to set dnsConfig on pod template
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index 9ece303..71273cc 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -82,6 +82,16 @@ deployment:
+   shareProcessNamespace: false
+   # Custom pod DNS policy. Apply if `hostNetwork: true`
+   # dnsPolicy: ClusterFirstWithHostNet
++  dnsConfig: {}
++    # nameservers:
++    #   - 192.0.2.1 # this is an example
++    # searches:
++    #   - ns1.svc.cluster-domain.example
++    #   - my.dns.search.suffix
++    # options:
++    #   - name: ndots
++    #     value: "2"
++    #   - name: edns0
+   # Additional imagePullSecrets
+   imagePullSecrets: []
+     # - name: myRegistryKeySecretName
+@@ -561,8 +571,11 @@ ports:
+     # asDefault: true
+     port: 8000
+     # hostPort: 8000
++    # containerPort: 8000
+     expose: true
+     exposedPort: 80
++    ## Different target traefik port on the cluster, useful for IP type LB
++    # targetPort: 80
+     # The port protocol (TCP/UDP)
+     protocol: TCP
+     # Use nodeport if set. This is useful if you have configured Traefik in a
+@@ -587,8 +600,11 @@ ports:
+     # asDefault: true
+     port: 8443
+     # hostPort: 8443
++    # containerPort: 8443
+     expose: true
+     exposedPort: 443
++    ## Different target traefik port on the cluster, useful for IP type LB
++    # targetPort: 80
+     ## The port protocol (TCP/UDP)
+     protocol: TCP
+     # nodePort: 32443
+```
+
+## 22.1.0  ![AppVersion: v2.9.10](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.10&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-04-07
+
+* ⬆️ Upgrade traefik Docker tag to v2.9.10
+* feat: add additional labels to tlsoption
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index 4762b77..9ece303 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -654,12 +654,15 @@ ports:
+ 
+ # TLS Options are created as TLSOption CRDs
+ # https://doc.traefik.io/traefik/https/tls/#tls-options
++# When using `labelSelector`, you'll need to set labels on tlsOption accordingly.
+ # Example:
+ # tlsOptions:
+ #   default:
++#     labels: {}
+ #     sniStrict: true
+ #     preferServerCipherSuites: true
+-#   foobar:
++#   customOptions:
++#     labels: {}
+ #     curvePreferences:
+ #       - CurveP521
+ #       - CurveP384
+```
+
+## 22.0.0  ![AppVersion: v2.9.9](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.9&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-03-29
+
+* BREAKING CHANGE: `image.repository` introduction may break during the upgrade. See PR #802.
+
+
+## 21.2.1  ![AppVersion: v2.9.9](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.9&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-03-28
+
+* ⬆️ Upgrade traefik Docker tag to v2.9.9
+* 🎨 Introduce `image.registry` and add explicit default (it may impact custom `image.repository`)
+* :memo: Clarify the need of an initContainer when enabling persistence for TLS Certificates
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index cadc7a6..4762b77 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -1,5 +1,6 @@
+ # Default values for Traefik
+ image:
++  registry: docker.io
+   repository: traefik
+   # defaults to appVersion
+   tag: ""
+@@ -66,10 +67,14 @@ deployment:
+   # Additional initContainers (e.g. for setting file permission as shown below)
+   initContainers: []
+     # The "volume-permissions" init container is required if you run into permission issues.
+-    # Related issue: https://github.com/traefik/traefik/issues/6825
++    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
+     # - name: volume-permissions
+-    #   image: busybox:1.35
+-    #   command: ["sh", "-c", "touch /data/acme.json && chmod -Rv 600 /data/* && chown 65532:65532 /data/acme.json"]
++    #   image: busybox:latest
++    #   command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
++    #   securityContext:
++    #     runAsNonRoot: true
++    #     runAsGroup: 65532
++    #     runAsUser: 65532
+     #   volumeMounts:
+     #     - name: data
+     #       mountPath: /data
+@@ -849,13 +854,17 @@ securityContext:
+   capabilities:
+     drop: [ALL]
+   readOnlyRootFilesystem: true
++
++podSecurityContext:
++#  # /!\ When setting fsGroup, Kubernetes will recursively changes ownership and
++#  # permissions for the contents of each volume to match the fsGroup. This can
++#  # be an issue when storing sensitive content like TLS Certificates /!\
++#  fsGroup: 65532
++  fsGroupChangePolicy: "OnRootMismatch"
+   runAsGroup: 65532
+   runAsNonRoot: true
+   runAsUser: 65532
+ 
+-podSecurityContext:
+-  fsGroup: 65532
+-
+ #
+ # Extra objects to deploy (value evaluated as a template)
+ #
+```
+
+## 21.2.0  ![AppVersion: v2.9.8](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.8&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-03-08
+
+* :sparkles: release 21.2.0 (#805)
+* 🚨 Fail when enabling PSP on Kubernetes v1.25+ (#801)
+* Separate UDP hostPort for HTTP/3
+* ⬆️ Upgrade traefik Docker tag to v2.9.8
+
+
+## 21.1.0  ![AppVersion: v2.9.7](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.7&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-02-15
+
+* ✨ release 21.1.0
+* ⬆️ Upgrade traefik Docker tag to v2.9.7
+* fix: traefik image name for renovate
+* feat: Add volumeName to PersistentVolumeClaim (#792)
+* Allow setting TLS options on dashboard IngressRoute
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index 780b04b..cadc7a6 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -142,6 +142,8 @@ ingressRoute:
+     entryPoints: ["traefik"]
+     # Additional ingressRoute middlewares (e.g. for authentication)
+     middlewares: []
++    # TLS options (e.g. secret containing certificate)
++    tls: {}
+ 
+ # Customize updateStrategy of traefik pods
+ updateStrategy:
+@@ -750,6 +752,7 @@ persistence:
+   accessMode: ReadWriteOnce
+   size: 128Mi
+   # storageClass: ""
++  # volumeName: ""
+   path: /data
+   annotations: {}
+   # subPath: "" # only mount a subpath of the Volume into the pod
+```
+
+## 21.0.0  ![AppVersion: v2.9.6](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.6&color=success&logo=) ![Kubernetes: >=1.16.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.16.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2023-02-10
+
+* 💥 New release with BREAKING changes (#786)
+* Configure Renovate (#783)
+* :bug: Disabling dashboard ingressroute should delete it (#785)
+* :boom: Rename image.name => image.repository (#784)
+* :necktie: Improve labels settings behavior on metrics providers (#774)
+* ✨ Chart.yaml - add kubeVersion: ">=1.16.0-0"
+* fix: allowExternalNameServices for kubernetes ingress when hub enabled (#772)
+* 🙈 Add a setting disable API check on Prometheus Operator (#769)
+* 📝 Improve documentation on entrypoint options
+* fix(service-metrics): invert prometheus svc & fullname length checking
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index 42a27f9..780b04b 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -1,6 +1,6 @@
+ # Default values for Traefik
+ image:
+-  name: traefik
++  repository: traefik
+   # defaults to appVersion
+   tag: ""
+   pullPolicy: IfNotPresent
+@@ -396,6 +396,8 @@ metrics:
+   #    enabled: false
+   #    labels: {}
+   #    annotations: {}
++  ## When set to true, it won't check if Prometheus Operator CRDs are deployed
++  #  disableAPICheck: false
+   #  serviceMonitor:
+   #    metricRelabelings: []
+   #      - sourceLabels: [__name__]
+@@ -580,7 +582,7 @@ ports:
+     # hostPort: 8443
+     expose: true
+     exposedPort: 443
+-    # The port protocol (TCP/UDP)
++    ## The port protocol (TCP/UDP)
+     protocol: TCP
+     # nodePort: 32443
+     #
+@@ -594,6 +596,16 @@ ports:
+       enabled: false
+     # advertisedPort: 4443
+     #
++    ## Trust forwarded  headers information (X-Forwarded-*).
++    #forwardedHeaders:
++    #  trustedIPs: []
++    #  insecure: false
++    #
++    ## Enable the Proxy Protocol header parsing for the entry point
++    #proxyProtocol:
++    #  trustedIPs: []
++    #  insecure: false
++    #
+     ## Set TLS at the entrypoint
+     ## https://doc.traefik.io/traefik/routing/entrypoints/#tls
+     tls:
+@@ -607,16 +619,6 @@ ports:
+       #     - foo.example.com
+       #     - bar.example.com
+     #
+-    # Trust forwarded  headers information (X-Forwarded-*).
+-    # forwardedHeaders:
+-    #   trustedIPs: []
+-    #   insecure: false
+-    #
+-    # Enable the Proxy Protocol header parsing for the entry point
+-    # proxyProtocol:
+-    #   trustedIPs: []
+-    #   insecure: false
+-    #
+     # One can apply Middlewares on an entrypoint
+     # https://doc.traefik.io/traefik/middlewares/overview/
+     # https://doc.traefik.io/traefik/routing/entrypoints/#middlewares
+```
+
 ## 20.8.0  ![AppVersion: v2.9.6](https://img.shields.io/static/v1?label=AppVersion&message=v2.9.6&color=success&logo=) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
 
-**Release date:** 2022-12-08
+**Release date:** 2022-12-09
 
 * ✨ update chart to version 20.8.0
 * ✨ add support for default entrypoints
